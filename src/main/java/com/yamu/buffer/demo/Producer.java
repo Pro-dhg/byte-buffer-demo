@@ -20,16 +20,11 @@ public class Producer implements Runnable{
     private Queue<GenerateDate> collects ;
     private final Queue<ByteBuffer> bb ;
     private final Queue<ByteBuffer> cc ;
-    private final Lock lock = new ReentrantLock() ;
-    int cacheCnt ;
-    int cacheSize ;
 
-    public Producer(Queue<GenerateDate> collects, Queue<ByteBuffer> bb, Queue<ByteBuffer> cc, int cacheCnt, int cacheSize) {
+    public Producer(Queue<GenerateDate> collects, Queue<ByteBuffer> bb, Queue<ByteBuffer> cc) {
         this.collects = collects;
         this.bb = bb;
         this.cc = cc;
-        this.cacheCnt = cacheCnt ;
-        this.cacheSize = cacheSize ;
     }
 
     @Override
@@ -58,6 +53,9 @@ public class Producer implements Runnable{
             }else {
                 try {
                     Thread.sleep(1000L);
+                    if (bb.size() > 0){
+                        byteBuffer = getByteBuffer();
+                    }
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }

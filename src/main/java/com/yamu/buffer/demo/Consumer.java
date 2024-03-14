@@ -12,8 +12,10 @@ import java.util.Queue;
  */
 public class Consumer implements Runnable{
 
+    private Queue<ByteBuffer> bb ;
     private Queue<ByteBuffer> cc ;
-    public Consumer(Queue<ByteBuffer> cc) {
+    public Consumer(Queue<ByteBuffer> bb, Queue<ByteBuffer> cc) {
+        this.bb = bb ;
         this.cc = cc ;
 
     }
@@ -44,7 +46,8 @@ public class Consumer implements Runnable{
 
     public synchronized void endOption(ByteBuffer buffer){
         System.out.println("uploadCache已读取成功，大小为"+buffer.position()+"字节，读取对象哈希码为："+System.identityHashCode(buffer));
-//        //清空数据,置为null，垃圾收集器会在合适时间回收
-//        buffer.clear() ;
+        //清空数据,置为null，垃圾收集器会在合适时间回收
+        buffer.clear() ;
+        bb.add(buffer);
     }
 }

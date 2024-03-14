@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * @ClassName ByteBufferDemo
@@ -51,12 +52,12 @@ public class ByteBufferDemo {
     /**
      * 堆外内存存储集合
      */
-    public static final Queue<ByteBuffer> bb = new LinkedList<>();
+    public static final Queue<ByteBuffer> bb = new LinkedBlockingDeque<>();
 
     /**
      * 消费者要消费的集合
      */
-    public static final Queue<ByteBuffer> cc = new LinkedList<>();
+    public static final Queue<ByteBuffer> cc = new LinkedBlockingDeque<>();
 
     public static String FILE_PATH = "src/main/java/com/yamu/buffer/demo/file";
 
@@ -100,12 +101,12 @@ public class ByteBufferDemo {
 //        }
         System.out.println("日志信息已采集完成，开始创建生产者，共创建"+PRODUCER_CNT+"个");
         for (int i = 0; i < PRODUCER_CNT; i++) {
-            new Thread(new Producer(collects,bb,cc,CACHE_CNT,CACHE_SIZE)).start();
+            new Thread(new Producer(collects,bb,cc)).start();
         }
         System.out.println("生产者已创建完成，正在往uploadCache写数据");
         System.out.println("开始创建消费者，共创建"+CONSUMER_CNT+"个");
         for (int i = 0; i < CONSUMER_CNT; i++) {
-            new Thread(new Consumer(cc)).start();
+            new Thread(new Consumer(bb,cc)).start();
         }
         System.out.println("消费者已创建完成，正在处理各个uploadCache");
     }
