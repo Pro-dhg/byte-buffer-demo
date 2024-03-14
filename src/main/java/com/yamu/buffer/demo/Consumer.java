@@ -12,12 +12,9 @@ import java.util.Queue;
  */
 public class Consumer implements Runnable{
 
-    private Queue<ByteBuffer> bb ;
     private Queue<ByteBuffer> cc ;
-    public Consumer(Queue<ByteBuffer> bb, Queue<ByteBuffer> cc) {
-        this.bb = bb ;
+    public Consumer(Queue<ByteBuffer> cc) {
         this.cc = cc ;
-
     }
 
     @Override
@@ -31,14 +28,15 @@ public class Consumer implements Runnable{
     }
 
     public synchronized ByteBuffer getConsumerByteBuffer(){
-        while (cc.size() <= 0) {
-            //没有可消费的uploadCache那就等1秒,如果一直没有就一直等
-            try {
-                Thread.sleep(1000L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+//        while (cc.size() <= 0) {
+//            //没有可消费的uploadCache那就等1秒,如果一直没有就一直等
+//            try {
+//                Thread.sleep(1000L);
+//            } catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
+        if (cc.isEmpty()) return null ;
 
 
         return cc.poll();
@@ -46,8 +44,8 @@ public class Consumer implements Runnable{
 
     public synchronized void endOption(ByteBuffer buffer){
         System.out.println("uploadCache已读取成功，大小为"+buffer.position()+"字节，读取对象哈希码为："+System.identityHashCode(buffer));
-        //清空数据,置为null，垃圾收集器会在合适时间回收
-        buffer.clear() ;
-        bb.add(buffer);
+//        //清空数据,置为null，垃圾收集器会在合适时间回收
+//        buffer.clear() ;
+//        bb.add(buffer);
     }
 }

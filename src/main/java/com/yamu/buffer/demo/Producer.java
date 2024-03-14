@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -18,8 +19,8 @@ import static com.yamu.buffer.demo.ByteBufferDemo.generateDateCollects;
  */
 public class Producer implements Runnable{
     private Queue<GenerateDate> collects ;
-    private final Queue<ByteBuffer> bb ;
-    private final Queue<ByteBuffer> cc ;
+    private Queue<ByteBuffer> bb ;
+    private Queue<ByteBuffer> cc ;
 
     public Producer(Queue<GenerateDate> collects, Queue<ByteBuffer> bb, Queue<ByteBuffer> cc) {
         this.collects = collects;
@@ -32,7 +33,6 @@ public class Producer implements Runnable{
         GenerateDate generateDate = getGenerateDate();
         ByteBuffer byteBuffer = getByteBuffer();
         ByteBufferUtil bbu = new ByteBufferUtil(byteBuffer);
-        boolean flag = false ;
         while (true){
             if (byteBuffer!=null){
                 byte[] bytes = generateDate.readLine();
@@ -40,30 +40,24 @@ public class Producer implements Runnable{
                     generateDate = getGenerateDate();
                 }else {
                     boolean b = bbu.put(bytes);
-                    if ((!b) && (!flag)){
+                    if (!b){
                         System.out.println("uploadCache写满，大小为"+bbu.length()+"字节，写入对象哈希码为："+System.identityHashCode(byteBuffer));
                         // 容量不够存放一行数据了，那么让消费者开始消费
                         cc.add(byteBuffer);
-                        flag = true ;
+                        byteBuffer.clear();
+                        try {
+                            Thread.sleep(1000L);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-                    if (byteBuffer.position()==0){
-                        flag = false ;
-                    }
-                }
-            }else {
-                try {
-                    Thread.sleep(1000L);
-                    if (bb.size() > 0){
-                        byteBuffer = getByteBuffer();
-                    }
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
                 }
             }
         }
 
     }
     public synchronized ByteBuffer getByteBuffer(){
+        if (bb.isEmpty()) return null ;
         return bb.poll();
     }
 
