@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.yamu.buffer.demo.ByteBufferDemo.generateDateCollects;
@@ -20,6 +21,8 @@ public class Producer implements Runnable{
     private final Queue<ByteBuffer> bb ;
     private final Queue<ByteBuffer> cc ;
 
+    private final Lock lock = new ReentrantLock() ;
+
     public Producer(Queue<GenerateDate> collects, Queue<ByteBuffer> bb, Queue<ByteBuffer> cc) {
         this.collects = collects;
         this.bb = bb;
@@ -32,6 +35,7 @@ public class Producer implements Runnable{
         ByteBuffer byteBuffer = getByteBuffer();
         ByteBufferUtil bbu = new ByteBufferUtil(byteBuffer);
         while (true){
+            lock.lock();
             if (byteBuffer!=null){
                 byte[] bytes = generateDate.readLine();
                 if (bytes==null){
@@ -50,6 +54,7 @@ public class Producer implements Runnable{
                 byteBuffer=getByteBuffer();
                 bbu=new ByteBufferUtil(byteBuffer);
             }
+            lock.unlock();
         }
 
     }
