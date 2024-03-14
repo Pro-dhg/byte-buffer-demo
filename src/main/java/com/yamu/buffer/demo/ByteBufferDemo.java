@@ -30,23 +30,23 @@ public class ByteBufferDemo {
     /**
      * uploadCache个数
      */
-    public static final int CACHE_CNT = 10 ;
+    public static Integer CACHE_CNT = 10 ;
     /**
      * uploadCache大小
      * 单位字节
      * 1024字节=1KB
      */
-    public static final int CACHE_SIZE = 3072 ;
+    public static Integer CACHE_SIZE = 3072 ;
 
     /**
      * 生产者个数
      */
-    public static final int PRODUCER_CNT = 10 ;
+    public static Integer PRODUCER_CNT = 10 ;
 
     /**
      * 消费者个数
      */
-    public static final int CONSUMER_CNT = 1 ;
+    public static Integer CONSUMER_CNT = 20 ;
 
     /**
      * 堆外内存存储集合
@@ -65,6 +65,21 @@ public class ByteBufferDemo {
 
 
     public static void main(String[] args) throws IOException, InterruptedException {
+        if (args != null && args.length > 0) {
+            CACHE_CNT = Integer.parseInt(args[0]);
+            CACHE_SIZE = Integer.parseInt(args[1]);
+            PRODUCER_CNT = Integer.parseInt(args[2]);
+            CONSUMER_CNT = Integer.parseInt(args[3]);
+        } else {
+            System.out.println("无参数输入，正在使用默认参数");
+        }
+        System.out.println("当前使用的参数如下：");
+        System.out.println("     生产者个数 uploadCache个数："+CACHE_CNT);
+        System.out.println("     uploadCache大小："+CACHE_SIZE);
+        System.out.println("     生产者个数："+PRODUCER_CNT);
+        System.out.println("     消费者个数："+CONSUMER_CNT);
+        System.out.println();
+
 
         System.out.println("开始创建uploadCache，共创建"+CACHE_CNT+"个");
         Thread.sleep(1000L);
@@ -87,12 +102,12 @@ public class ByteBufferDemo {
 //        }
         System.out.println("日志信息已采集完成，开始创建生产者，共创建"+PRODUCER_CNT+"个");
         for (int i = 0; i < PRODUCER_CNT; i++) {
-            new Thread(new Producer(collects,bb,cc)).start();
+            new Thread(new Producer(collects,bb,cc,CACHE_CNT,CACHE_SIZE)).start();
         }
         System.out.println("生产者已创建完成，正在往uploadCache写数据");
         System.out.println("开始创建消费者，共创建"+CONSUMER_CNT+"个");
         for (int i = 0; i < CONSUMER_CNT; i++) {
-            new Thread(new Consumer(bb,cc)).start();
+            new Thread(new Consumer(cc)).start();
         }
         System.out.println("消费者已创建完成，正在处理各个uploadCache");
     }

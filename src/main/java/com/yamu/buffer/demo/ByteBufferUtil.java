@@ -1,5 +1,6 @@
 package com.yamu.buffer.demo;
 
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
 /**
@@ -22,7 +23,15 @@ public class ByteBufferUtil {
         }
         boolean b = bytes.length <= available();
         if (b) {
-            this.buffer.put(bytes);
+            try {
+                this.buffer.put(bytes);
+            }catch (BufferOverflowException e){
+                // 这个异常是因为满了
+                return false ;
+            }/*catch (IllegalArgumentException e){
+                // 这个异常是因为NIO缓冲区的位置大于限制的值
+                return false ;
+            }*/
         }
         return b;
     }
