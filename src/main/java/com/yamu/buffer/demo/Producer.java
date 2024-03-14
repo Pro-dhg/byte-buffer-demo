@@ -37,47 +37,36 @@ public class Producer implements Runnable{
         GenerateDate generateDate = getGenerateDate();
         ByteBuffer byteBuffer = getByteBuffer();
         ByteBufferUtil bbu = new ByteBufferUtil(byteBuffer);
+        boolean flag = false ;
         while (true){
             if (byteBuffer!=null){
-                lock.lock();
                 byte[] bytes = generateDate.readLine();
                 if (bytes==null){
                     generateDate = getGenerateDate();
                 }else {
                     boolean b = bbu.put(bytes);
-                    if (!b){
+                    if ((!b) && (!flag)){
                         System.out.println("uploadCache写满，大小为"+bbu.length()+"字节，写入对象哈希码为："+System.identityHashCode(byteBuffer));
                         // 容量不够存放一行数据了，那么让消费者开始消费
                         cc.add(byteBuffer);
-                        byteBuffer = null ;
+                        flag = true ;
+                    }
+                    if (byteBuffer.position()==0){
+                        flag = false ;
                     }
                 }
-                lock.unlock();
             }else {
-                byteBuffer=getByteBuffer();
-                bbu=new ByteBufferUtil(byteBuffer);
+                try {
+                    Thread.sleep(1000L);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
     }
-
     public synchronized ByteBuffer getByteBuffer(){
-        while (bb.size() <= 0 && cc.size() <=0) {
-            //没有可用的uploadCache那就等1秒,如果一直没有就一直等
-            try {
-                System.out.println("暂时无可用uploadCache，等待1s");
-                Thread.sleep(1000L);
-                for (int i = 1; i < cacheCnt+1; i++) {
-                    ByteBuffer buffer = ByteBuffer.allocateDirect(cacheSize);
-                    bb.add(buffer);
-                }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        ByteBuffer poll = bb.poll();
-
-        return poll;
+        return bb.poll();
     }
 
     public synchronized GenerateDate getGenerateDate() {

@@ -64,7 +64,7 @@ public class ByteBufferDemo {
     public static Boolean flag = true ;
 
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         if (args != null && args.length > 0) {
             CACHE_CNT = Integer.parseInt(args[0]);
             CACHE_SIZE = Integer.parseInt(args[1]);
@@ -84,14 +84,11 @@ public class ByteBufferDemo {
 
 
         System.out.println("开始创建uploadCache，共创建"+CACHE_CNT+"个");
-        Thread.sleep(1000L);
         for (int i = 1; i < CACHE_CNT+1; i++) {
             ByteBuffer buffer = ByteBuffer.allocateDirect(CACHE_SIZE);
             bb.add(buffer);
         }
-        Thread.sleep(1000L);
         System.out.println("所有uploadCache已创建成功，可以开始模拟指令日志读取并存放在堆外内存流程");
-        Thread.sleep(1000L);
         System.out.println("开始读取日志信息");
         generateDateCollects(collects);
 //        while (true){
