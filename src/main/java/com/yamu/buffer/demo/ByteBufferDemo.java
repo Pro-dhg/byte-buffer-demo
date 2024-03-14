@@ -92,7 +92,7 @@ public class ByteBufferDemo {
         System.out.println("生产者已创建完成，正在往uploadCache写数据");
         System.out.println("开始创建消费者，共创建"+CONSUMER_CNT+"个");
         for (int i = 0; i < CONSUMER_CNT; i++) {
-            new Thread(new Consumer(cc)).start();
+            new Thread(new Consumer(bb,cc)).start();
         }
         System.out.println("消费者已创建完成，正在处理各个uploadCache");
     }

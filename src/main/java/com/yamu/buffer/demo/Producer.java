@@ -30,38 +30,42 @@ public class Producer implements Runnable{
     public void run() {
         GenerateDate generateDate = getGenerateDate();
         ByteBuffer byteBuffer = getByteBuffer();
+        ByteBufferUtil bbu = new ByteBufferUtil(byteBuffer);
         while (true){
-            ByteBufferUtil bbu = new ByteBufferUtil(byteBuffer);
-            byte[] bytes = generateDate.readLine();
-            if (bytes==null){
-                generateDate = getGenerateDate();
-            }else {
-                boolean b = bbu.put(bytes);
-                if (!b){
-                    System.out.println("uploadCache已写满，大小为"+bbu.length()+"字节，写入对象哈希码为："+System.identityHashCode(byteBuffer));
-                    // 容量不够存放一行数据了，那么让消费者开始消费
-                    cc.add(byteBuffer);
-                    byteBuffer = getByteBuffer();
+            if (byteBuffer!=null){
+                byte[] bytes = generateDate.readLine();
+                if (bytes==null){
+                    generateDate = getGenerateDate();
+                }else {
+                    boolean b = bbu.put(bytes);
+                    if (!b){
+                        System.out.println("uploadCache已写满，大小为"+bbu.length()+"字节，写入对象哈希码为："+System.identityHashCode(byteBuffer));
+                        // 容量不够存放一行数据了，那么让消费者开始消费
+                        cc.add(byteBuffer);
+                        byteBuffer = getByteBuffer();
+                        bbu=new ByteBufferUtil(byteBuffer);
+                    }
                 }
+            }else {
+                byteBuffer=getByteBuffer();
+                bbu=new ByteBufferUtil(byteBuffer);
             }
         }
 
     }
 
     public synchronized ByteBuffer getByteBuffer(){
-        if (bb.size() == 0) {
+        while (bb.size() == 0) {
             //没有可用的uploadCache那就等1秒,如果一直没有就一直等
             try {
                 System.out.println("暂时无可用uploadCache，等待1s");
                 Thread.sleep(1000L);
-                getByteBuffer();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-        }else {
-            return bb.poll();
         }
-        return getByteBuffer();
+
+        return bb.poll();
     }
 
     public synchronized GenerateDate getGenerateDate() {
