@@ -39,8 +39,8 @@ public class Consumer implements Runnable{
 
     @Override
     public void run() {
-        ByteBuffer buffer = cc.poll();
         while (true){
+            ByteBuffer buffer = getConsumerByteBuffer();
             lock.lock();
             if (buffer !=null && buffer.position()>0){
                 try {
@@ -56,8 +56,6 @@ public class Consumer implements Runnable{
                     throw new RuntimeException(e);
                 }
                 endOption(buffer);
-            }else {
-                buffer = getConsumerByteBuffer();
             }
             lock.unlock();
         }

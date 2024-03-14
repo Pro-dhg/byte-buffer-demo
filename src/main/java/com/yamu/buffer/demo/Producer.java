@@ -39,6 +39,7 @@ public class Producer implements Runnable{
         ByteBufferUtil bbu = new ByteBufferUtil(byteBuffer);
         while (true){
             if (byteBuffer!=null){
+                lock.lock();
                 byte[] bytes = generateDate.readLine();
                 if (bytes==null){
                     generateDate = getGenerateDate();
@@ -51,6 +52,7 @@ public class Producer implements Runnable{
                         byteBuffer = null ;
                     }
                 }
+                lock.unlock();
             }else {
                 byteBuffer=getByteBuffer();
                 bbu=new ByteBufferUtil(byteBuffer);

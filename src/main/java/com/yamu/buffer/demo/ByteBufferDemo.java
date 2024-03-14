@@ -58,7 +58,7 @@ public class ByteBufferDemo {
      */
     public static final Queue<ByteBuffer> cc = new LinkedList<>();
 
-    public static final String FILE_PATH = "src/main/java/com/yamu/buffer/demo/file";
+    public static String FILE_PATH = "src/main/java/com/yamu/buffer/demo/file";
 
     public static final Queue<GenerateDate> collects = new LinkedList<>();
     public static Boolean flag = true ;
@@ -70,14 +70,16 @@ public class ByteBufferDemo {
             CACHE_SIZE = Integer.parseInt(args[1]);
             PRODUCER_CNT = Integer.parseInt(args[2]);
             CONSUMER_CNT = Integer.parseInt(args[3]);
+            FILE_PATH = args[4];
         } else {
             System.out.println("无参数输入，正在使用默认参数");
         }
         System.out.println("当前使用的参数如下：");
-        System.out.println("     生产者个数 uploadCache个数："+CACHE_CNT);
+        System.out.println("     uploadCache个数："+CACHE_CNT);
         System.out.println("     uploadCache大小："+CACHE_SIZE);
         System.out.println("     生产者个数："+PRODUCER_CNT);
         System.out.println("     消费者个数："+CONSUMER_CNT);
+        System.out.println("     原始文件路径："+FILE_PATH);
         System.out.println();
 
 
@@ -86,10 +88,9 @@ public class ByteBufferDemo {
         for (int i = 1; i < CACHE_CNT+1; i++) {
             ByteBuffer buffer = ByteBuffer.allocateDirect(CACHE_SIZE);
             bb.add(buffer);
-            System.out.println("第"+i+"个uploadCache已创建成功，buffer的大小为："+CACHE_SIZE+" 字节，对象哈希码为："+System.identityHashCode(buffer)+"，并存储到队列中");
         }
         Thread.sleep(1000L);
-        System.out.println("所有uploadCache已初始成功，可以开始模拟指令日志读取并存放在堆外内存流程");
+        System.out.println("所有uploadCache已创建成功，可以开始模拟指令日志读取并存放在堆外内存流程");
         Thread.sleep(1000L);
         System.out.println("开始读取日志信息");
         generateDateCollects(collects);
@@ -113,39 +114,49 @@ public class ByteBufferDemo {
     }
 
     public static void generateDateCollects(Queue<GenerateDate> collects) throws IOException {
-        for (String filePath : findLog()) {
-            InputStream in = new FileInputStream(filePath);
-            BufferedReader reader = new BufferedReader(new InputStreamReader( in, StandardCharsets.UTF_8.name()));
-            GenerateDate generateDate = new GenerateDate() {
-                @Override
-                public byte[] readLine() {
-                    String line ;
-                    try {
-                        if ((line = reader.readLine()) != null){
-                            line+="\n";
-                            return line.getBytes(StandardCharsets.UTF_8) ;
+        String[] logs = findLog();
+        if (logs.length>0) {
+            for (String filePath : logs) {
+                InputStream in = new FileInputStream(filePath);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8.name()));
+                GenerateDate generateDate = new GenerateDate() {
+                    @Override
+                    public byte[] readLine() {
+                        String line;
+                        try {
+                            if ((line = reader.readLine()) != null) {
+                                line += "\n";
+                                return line.getBytes(StandardCharsets.UTF_8);
+                            }
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
                         }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        return null;
                     }
-                    return null;
-                }
 
-                @Override
-                public String getLine() {
-                    String line ;
-                    try {
-                        if ((line = reader.readLine()) != null){
-                            line+="\n";
-                            return line ;
+                    @Override
+                    public String getLine() {
+                        String line;
+                        try {
+                            if ((line = reader.readLine()) != null) {
+                                line += "\n";
+                                return line;
+                            }
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
                         }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        return null;
                     }
-                    return null;
-                }
-            } ;
-            collects.add(generateDate);
+                };
+                collects.add(generateDate);
+            }
+        }else {
+            try {
+                System.out.println("路径："+FILE_PATH+" 下无用.log结尾的文件，请检查");
+                Thread.sleep(Long.MAX_VALUE);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
