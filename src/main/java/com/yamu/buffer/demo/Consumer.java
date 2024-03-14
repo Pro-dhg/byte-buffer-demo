@@ -32,8 +32,7 @@ public class Consumer implements Runnable{
         while (cc.size() <= 0) {
             //没有可消费的uploadCache那就等1秒,如果一直没有就一直等
             try {
-                System.out.println("已无可消费uploadCache");
-                Thread.sleep(Long.MAX_VALUE);
+                Thread.sleep(1000L);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
