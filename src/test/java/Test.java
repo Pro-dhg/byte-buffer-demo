@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
  * @description:
  */
 public class Test {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
 
         buffer.put("hello world".getBytes(StandardCharsets.UTF_8));
@@ -25,5 +25,13 @@ public class Test {
 
         System.out.println(buffer.position());
         buffer.clear();
+
+        long start = System.currentTimeMillis();
+
+        Thread.sleep(1000L);
+
+        long end = System.currentTimeMillis();
+
+        System.out.println(end-start);
     }
 }
