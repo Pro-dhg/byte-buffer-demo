@@ -48,7 +48,8 @@ public class ByteBufferDemo {
 
     public static String FILE_PATH = "src/main/java/com/yamu/buffer/demo/file";
     public static String OUTPUT_FILE = "src/main/java/com/yamu/buffer/demo/file/out.log";
-
+    public static Boolean ALWAYS = false ;
+    public static Boolean WRITE = false ;
 
     public static void main(String[] args) throws IOException {
         if (args != null && args.length > 0) {
@@ -58,6 +59,8 @@ public class ByteBufferDemo {
             CONSUMER_CNT = Integer.parseInt(args[3]);
             FILE_PATH = args[4];
             OUTPUT_FILE = args[5];
+            ALWAYS = Boolean.getBoolean(args[6]);
+            WRITE = Boolean.getBoolean(args[7]);
         } else {
             System.out.println("无参数输入，正在使用默认参数");
         }
@@ -68,6 +71,8 @@ public class ByteBufferDemo {
         System.out.println("     消费者个数："+CONSUMER_CNT);
         System.out.println("     原始文件路径："+FILE_PATH);
         System.out.println("     写出文件路径："+OUTPUT_FILE);
+        System.out.println("     是否一直往堆外内存写数据："+ALWAYS);
+        System.out.println("     是否输出到文件中："+WRITE);
         System.out.println();
 
 
@@ -92,13 +97,13 @@ public class ByteBufferDemo {
         List<File> logs = findLog();
         System.out.println("日志信息已采集完成，开始创建生产者，共创建"+ (PRODUCER_CNT > logs.size() ? logs.size() : PRODUCER_CNT) +"个");
         for (int i = 0; i < PRODUCER_CNT && i < logs.size(); i++) {
-            new Thread(new Producer(logs.get(i),bb,cc)).start();
+            new Thread(new Producer(logs.get(i),bb,cc,ALWAYS)).start();
         }
         System.out.println("生产者已创建完成，正在往uploadCache写数据");
         System.out.println("开始创建消费者，共创建"+CONSUMER_CNT+"个");
         File outputFIle = new File(OUTPUT_FILE);
         for (int i = 0; i < CONSUMER_CNT; i++) {
-            new Thread(new Consumer(bb,cc,outputFIle)).start();
+            new Thread(new Consumer(bb,cc,outputFIle,WRITE)).start();
         }
         System.out.println("消费者已创建完成，正在处理各个uploadCache");
     }

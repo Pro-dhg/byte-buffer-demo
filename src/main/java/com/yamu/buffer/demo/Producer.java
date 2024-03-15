@@ -1,9 +1,6 @@
 package com.yamu.buffer.demo;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -21,36 +18,77 @@ public class Producer implements Runnable{
     private final BlockingQueue<ByteBuffer> bb ;
     private final BlockingQueue<ByteBuffer> cc ;
 
-    public Producer(File logFile, BlockingQueue<ByteBuffer> bb, BlockingQueue<ByteBuffer> cc) {
+    private final Boolean always ;
+
+    public Producer(File logFile, BlockingQueue<ByteBuffer> bb, BlockingQueue<ByteBuffer> cc, Boolean ALWAYS) {
         this.logFile = logFile;
         this.bb = bb;
         this.cc = cc;
+        this.always = ALWAYS ;
     }
 
     @Override
     public void run() {
-        while (true){
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(logFile)) ;
-                ByteBuffer buffer = bb.take();
+        if (always){
+            while (true){
+                try {
+                    BufferedReader reader = new BufferedReader(new FileReader(logFile)) ;
+                    ByteBuffer buffer = bb.take();
 
-                String line ;
-                while ((line = reader.readLine()) != null){
-                    try {
-                        buffer.put(line.getBytes(StandardCharsets.UTF_8));
-                    }catch (BufferOverflowException e){
-                        // 这个异常是因为满了
+                    String line ;
+                    while ((line = reader.readLine()) != null){
+                        try {
+                            line+="\n";
+                            buffer.put(line.getBytes(StandardCharsets.UTF_8));
+                        }catch (BufferOverflowException e){
+                            // 这个异常是因为满了
+                            break;
+                        }
+                    }
+                    cc.put(buffer);
+                    System.out.println(Thread.currentThread().getId()+" uploadCache写满，大小为"+buffer.position()+"字节，写入对象哈希码为："+System.identityHashCode(buffer));
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }else {
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(logFile));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+            while (true){
+                try {
+                    ByteBuffer buffer = bb.take();
+                    String line ;
+                    while ((line = reader.readLine()) != null){
+                        try {
+                            line+="\n";
+                            buffer.put(line.getBytes(StandardCharsets.UTF_8));
+                        }catch (BufferOverflowException e){
+                            // 这个异常是因为满了
+                            break;
+                        }
+                    }
+                    if (reader.readLine() == null){
+                        cc.put(buffer);
+                        System.out.println(Thread.currentThread().getId()+" 最后一个 uploadCache写满，大小为"+buffer.position()+"字节，写入对象哈希码为："+System.identityHashCode(buffer));
                         break;
                     }
+                    cc.put(buffer);
+                    System.out.println(Thread.currentThread().getId()+" uploadCache写满，大小为"+buffer.position()+"字节，写入对象哈希码为："+System.identityHashCode(buffer));
+                }catch (IOException e){
+                    e.printStackTrace();
                 }
-                cc.put(buffer);
-                System.out.println(Thread.currentThread().getId()+" uploadCache写满，大小为"+buffer.position()+"字节，写入对象哈希码为："+System.identityHashCode(buffer));
-            }catch (IOException e){
-                e.printStackTrace();
-            }
-            catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return;
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
             }
         }
 
