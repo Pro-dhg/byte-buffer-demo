@@ -61,7 +61,7 @@ public class ByteBufferDemo {
             FILE_PATH = args[4];
             OUTPUT_FILE = args[5];
             ALWAYS = Objects.equals("false",args[6]) ? ALWAYS : !ALWAYS;
-            WRITE = Objects.equals("false",args[7]) ? WRITE : !WRITE;
+            WRITE = Objects.equals("true",args[7]) ? WRITE : !WRITE;
         } else {
             System.out.println("无参数输入，正在使用默认参数");
         }
