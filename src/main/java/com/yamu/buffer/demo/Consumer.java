@@ -1,7 +1,6 @@
 package com.yamu.buffer.demo;
 
 import java.nio.ByteBuffer;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 
 /**

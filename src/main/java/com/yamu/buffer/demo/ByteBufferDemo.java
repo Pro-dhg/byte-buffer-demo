@@ -2,15 +2,9 @@ package com.yamu.buffer.demo;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -94,13 +88,6 @@ public class ByteBufferDemo {
         System.out.println("开始读取日志信息");
 
         List<File> logs = findLog();
-        //        while (true){
-//            byte[] bytes = poll.readLine();
-//            if (bytes==null){
-//                break;
-//            }
-//            System.out.println(new String(bytes, Charset.forName(StandardCharsets.UTF_8.name())));
-//        }
         System.out.println("日志信息已采集完成，开始创建生产者，共创建"+ (PRODUCER_CNT > logs.size() ? logs.size() : PRODUCER_CNT) +"个");
         for (int i = 0; i < PRODUCER_CNT && i < logs.size(); i++) {
             new Thread(new Producer(logs.get(i),bb,cc)).start();
