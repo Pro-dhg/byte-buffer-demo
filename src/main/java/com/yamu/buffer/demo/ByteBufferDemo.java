@@ -47,7 +47,7 @@ public class ByteBufferDemo {
     public static Integer CONSUMER_CNT = 1 ;
 
     public static String FILE_PATH = "src/main/java/com/yamu/buffer/demo/file";
-    public static Boolean flag = true ;
+    public static String OUTPUT_FILE = "src/main/java/com/yamu/buffer/demo/file/out.log";
 
 
     public static void main(String[] args) throws IOException {
@@ -57,6 +57,7 @@ public class ByteBufferDemo {
             PRODUCER_CNT = Integer.parseInt(args[2]);
             CONSUMER_CNT = Integer.parseInt(args[3]);
             FILE_PATH = args[4];
+            OUTPUT_FILE = args[5];
         } else {
             System.out.println("无参数输入，正在使用默认参数");
         }
@@ -66,6 +67,7 @@ public class ByteBufferDemo {
         System.out.println("     生产者个数："+PRODUCER_CNT);
         System.out.println("     消费者个数："+CONSUMER_CNT);
         System.out.println("     原始文件路径："+FILE_PATH);
+        System.out.println("     写出文件路径："+OUTPUT_FILE);
         System.out.println();
 
 
@@ -94,8 +96,9 @@ public class ByteBufferDemo {
         }
         System.out.println("生产者已创建完成，正在往uploadCache写数据");
         System.out.println("开始创建消费者，共创建"+CONSUMER_CNT+"个");
+        File outputFIle = new File(OUTPUT_FILE);
         for (int i = 0; i < CONSUMER_CNT; i++) {
-            new Thread(new Consumer(bb,cc)).start();
+            new Thread(new Consumer(bb,cc,outputFIle)).start();
         }
         System.out.println("消费者已创建完成，正在处理各个uploadCache");
     }
