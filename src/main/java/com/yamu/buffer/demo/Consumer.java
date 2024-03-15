@@ -2,6 +2,7 @@ package com.yamu.buffer.demo;
 
 import java.nio.ByteBuffer;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * @ClassName Consumer
@@ -12,40 +13,30 @@ import java.util.Queue;
  */
 public class Consumer implements Runnable{
 
-    private Queue<ByteBuffer> cc ;
-    public Consumer(Queue<ByteBuffer> cc) {
+    private BlockingQueue<ByteBuffer> bb ;
+    private BlockingQueue<ByteBuffer> cc ;
+    public Consumer(BlockingQueue<ByteBuffer> bb, BlockingQueue<ByteBuffer> cc) {
+        this.bb = bb ;
         this.cc = cc ;
     }
 
     @Override
     public void run() {
         while (true){
-            ByteBuffer buffer = getConsumerByteBuffer();
-            if (buffer !=null && buffer.position()>0){
-                endOption(buffer);
+            try {
+                ByteBuffer buffer = cc.take();
+                // 读取ByteBuffer中的数据（这里只是模拟消费）
+                while (buffer.hasRemaining()) {
+                    buffer.get();
+                }
+                System.out.println(Thread.currentThread().getId()+" uploadCache已读取成功，大小为"+buffer.position()+"字节，读取对象哈希码为："+System.identityHashCode(buffer));
+                buffer.clear();
+                bb.put(buffer);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
             }
         }
     }
 
-    public synchronized ByteBuffer getConsumerByteBuffer(){
-//        while (cc.size() <= 0) {
-//            //没有可消费的uploadCache那就等1秒,如果一直没有就一直等
-//            try {
-//                Thread.sleep(1000L);
-//            } catch (InterruptedException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-        if (cc.isEmpty()) return null ;
-
-
-        return cc.poll();
-    }
-
-    public synchronized void endOption(ByteBuffer buffer){
-        System.out.println("uploadCache已读取成功，大小为"+buffer.position()+"字节，读取对象哈希码为："+System.identityHashCode(buffer));
-//        //清空数据,置为null，垃圾收集器会在合适时间回收
-//        buffer.clear() ;
-//        bb.add(buffer);
-    }
 }

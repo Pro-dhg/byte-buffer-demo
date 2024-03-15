@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 /**
@@ -51,19 +52,7 @@ public class ByteBufferDemo {
      */
     public static Integer CONSUMER_CNT = 1 ;
 
-    /**
-     * 堆外内存存储集合
-     */
-    public static Queue<ByteBuffer> bb = new LinkedBlockingDeque<>();
-
-    /**
-     * 消费者要消费的集合
-     */
-    public static Queue<ByteBuffer> cc = new LinkedBlockingDeque<>();
-
     public static String FILE_PATH = "src/main/java/com/yamu/buffer/demo/file";
-
-    public static final Queue<GenerateDate> collects = new LinkedList<>();
     public static Boolean flag = true ;
 
 
@@ -86,71 +75,61 @@ public class ByteBufferDemo {
         System.out.println();
 
 
+        /**
+         * 堆外内存存储集合
+         */
+        BlockingQueue<ByteBuffer> bb = new LinkedBlockingDeque<>();
+
+        /**
+         * 消费者要消费的集合
+         */
+        BlockingQueue<ByteBuffer> cc = new LinkedBlockingDeque<>();
+
+
         System.out.println("开始创建uploadCache，共创建"+CACHE_CNT+"个");
-        for (int i = 1; i < CACHE_CNT+1; i++) {
-            ByteBuffer buffer = ByteBuffer.allocateDirect(CACHE_SIZE);
-            bb.add(buffer);
+        for (int i = 0; i < CACHE_CNT; i++) {
+            bb.add(ByteBuffer.allocateDirect(CACHE_SIZE));
         }
         System.out.println("所有uploadCache已创建成功，可以开始模拟指令日志读取并存放在堆外内存流程");
         System.out.println("开始读取日志信息");
-        generateDateCollects(collects);
-//        while (true){
+
+        List<File> logs = findLog();
+        //        while (true){
 //            byte[] bytes = poll.readLine();
 //            if (bytes==null){
 //                break;
 //            }
 //            System.out.println(new String(bytes, Charset.forName(StandardCharsets.UTF_8.name())));
 //        }
-        System.out.println("日志信息已采集完成，开始创建生产者，共创建"+PRODUCER_CNT+"个");
-        for (int i = 0; i < PRODUCER_CNT; i++) {
-            new Thread(new Producer(collects,bb,cc)).start();
+        System.out.println("日志信息已采集完成，开始创建生产者，共创建"+ (PRODUCER_CNT > logs.size() ? logs.size() : PRODUCER_CNT) +"个");
+        for (int i = 0; i < PRODUCER_CNT && i < logs.size(); i++) {
+            new Thread(new Producer(logs.get(i),bb,cc)).start();
         }
         System.out.println("生产者已创建完成，正在往uploadCache写数据");
         System.out.println("开始创建消费者，共创建"+CONSUMER_CNT+"个");
         for (int i = 0; i < CONSUMER_CNT; i++) {
-            new Thread(new Consumer(cc)).start();
+            new Thread(new Consumer(bb,cc)).start();
         }
         System.out.println("消费者已创建完成，正在处理各个uploadCache");
     }
 
-    public static void generateDateCollects(Queue<GenerateDate> collects) throws IOException {
-        String[] logs = findLog();
-        if (logs.length>0) {
-            for (String filePath : logs) {
-                InputStream in = new FileInputStream(filePath);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8.name()));
-                GenerateDate generateDate = new GenerateDate() {
-                    @Override
-                    public byte[] readLine() {
-                        String line;
-                        try {
-                            if ((line = reader.readLine()) != null) {
-                                line += "\n";
-                                return line.getBytes(StandardCharsets.UTF_8);
-                            }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                        return null;
-                    }
+    public static List<File> findLog(){
+        // 获取该路径下所有的.log文件
+        List<File> logFiles = new ArrayList<>();
+        try {
+            Files.walk(Paths.get(FILE_PATH))
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".log"))
+                    .forEach(path -> {
+                        logFiles.add(path.toFile()) ;
+                        System.out.println("扫描到日志文件："+path.getFileName());
+                    });
+        } catch (IOException e) {
+            System.err.println("文件路径异常");
+            return null;
+        }
 
-                    @Override
-                    public String getLine() {
-                        String line;
-                        try {
-                            if ((line = reader.readLine()) != null) {
-                                line += "\n";
-                                return line;
-                            }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                        return null;
-                    }
-                };
-                collects.add(generateDate);
-            }
-        }else {
+        if (logFiles.size() <= 0){
             try {
                 System.out.println("路径："+FILE_PATH+" 下无用.log结尾的文件，请检查");
                 Thread.sleep(Long.MAX_VALUE);
@@ -158,40 +137,6 @@ public class ByteBufferDemo {
                 throw new RuntimeException(e);
             }
         }
-    }
-
-    public static String[] findLog(){
-        List<String> inputFiles = new ArrayList<>();
-        Path path = Paths.get(FILE_PATH);
-        if (flag){
-
-            try {
-                PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:**/*.log");
-                Files.walk(path)
-                        .filter(Files::isRegularFile)
-                        .filter(path1 -> matcher.matches(path1))
-                        .forEach(in->{
-                            inputFiles.add(in.toString());
-                                System.out.println("扫描到日志文件："+in.getFileName());
-            });
-                flag=false ;
-            }catch (IOException e){
-                System.err.println("文件路径异常");
-            }
-        }else {
-            try {
-                PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:**/*.log");
-                Files.walk(path)
-                        .filter(Files::isRegularFile)
-                        .filter(path1 -> matcher.matches(path1))
-                        .forEach(in->{
-                            inputFiles.add(in.toString());
-                        });
-            }catch (IOException e){
-                System.err.println("文件路径异常");
-            }
-        }
-
-        return inputFiles.toArray(new String[0]) ;
+        return logFiles;
     }
 }

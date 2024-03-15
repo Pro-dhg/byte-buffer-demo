@@ -1,14 +1,13 @@
 package com.yamu.buffer.demo;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static com.yamu.buffer.demo.ByteBufferDemo.generateDateCollects;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * @ClassName Producer
@@ -18,59 +17,43 @@ import static com.yamu.buffer.demo.ByteBufferDemo.generateDateCollects;
  * @Description:
  */
 public class Producer implements Runnable{
-    private Queue<GenerateDate> collects ;
-    private Queue<ByteBuffer> bb ;
-    private Queue<ByteBuffer> cc ;
+    private final File logFile;
+    private final BlockingQueue<ByteBuffer> bb ;
+    private final BlockingQueue<ByteBuffer> cc ;
 
-    public Producer(Queue<GenerateDate> collects, Queue<ByteBuffer> bb, Queue<ByteBuffer> cc) {
-        this.collects = collects;
+    public Producer(File logFile, BlockingQueue<ByteBuffer> bb, BlockingQueue<ByteBuffer> cc) {
+        this.logFile = logFile;
         this.bb = bb;
         this.cc = cc;
     }
 
     @Override
     public void run() {
-        GenerateDate generateDate = getGenerateDate();
-        ByteBuffer byteBuffer = getByteBuffer();
-        ByteBufferUtil bbu = new ByteBufferUtil(byteBuffer);
         while (true){
-            if (byteBuffer!=null){
-                byte[] bytes = generateDate.readLine();
-                if (bytes==null){
-                    generateDate = getGenerateDate();
-                }else {
-                    boolean b = bbu.put(bytes);
-                    if (!b){
-                        System.out.println("uploadCache写满，大小为"+bbu.length()+"字节，写入对象哈希码为："+System.identityHashCode(byteBuffer));
-                        // 容量不够存放一行数据了，那么让消费者开始消费
-                        cc.add(byteBuffer);
-                        byteBuffer.clear();
-                        try {
-                            Thread.sleep(1000L);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(logFile)) ;
+                ByteBuffer buffer = bb.take();
+
+                String line ;
+                while ((line = reader.readLine()) != null){
+                    try {
+                        buffer.put(line.getBytes(StandardCharsets.UTF_8));
+                    }catch (BufferOverflowException e){
+                        // 这个异常是因为满了
+                        break;
                     }
                 }
-            }
-        }
-
-    }
-    public synchronized ByteBuffer getByteBuffer(){
-        if (bb.isEmpty()) return null ;
-        return bb.poll();
-    }
-
-    public synchronized GenerateDate getGenerateDate() {
-        if (collects.size() == 0) {
-            collects = new LinkedList<>();
-            //重新获取数据
-            try {
-                generateDateCollects(collects);
-            } catch (IOException e) {
+                cc.put(buffer);
+                System.out.println(Thread.currentThread().getId()+" uploadCache写满，大小为"+buffer.position()+"字节，写入对象哈希码为："+System.identityHashCode(buffer));
+            }catch (IOException e){
                 e.printStackTrace();
             }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
         }
-        return collects.poll();
+
     }
+
 }
