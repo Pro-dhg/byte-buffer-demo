@@ -49,7 +49,7 @@ public class Producer implements Runnable{
                     long end = System.currentTimeMillis();
                     cc.put(buffer);
                     System.out.println(Thread.currentThread().getId()+" uploadCache写满，大小为"+buffer.position()+"字节，写入对象哈希码为："+System.identityHashCode(buffer)
-                            + "  总用时："+(end-start)+"ms");
+                            + "  用时："+(end-start)+"ms");
                 }catch (IOException e){
                     e.printStackTrace();
                 }
@@ -83,12 +83,12 @@ public class Producer implements Runnable{
                     if (reader.readLine() == null){
                         cc.put(buffer);
                         System.out.println(Thread.currentThread().getId()+" 最后一个 uploadCache写满，大小为"+buffer.position()+"字节，写入对象哈希码为："+System.identityHashCode(buffer)
-                                + "  总用时："+(end-start)+"ms");
+                                + "  用时："+(end-start)+"ms");
                         break;
                     }
                     cc.put(buffer);
                     System.out.println(Thread.currentThread().getId()+" uploadCache写满，大小为"+buffer.position()+"字节，写入对象哈希码为："+System.identityHashCode(buffer)
-                            + "  总用时："+(end-start)+"ms");
+                            + "  用时："+(end-start)+"ms");
                 }catch (IOException e){
                     e.printStackTrace();
                 }

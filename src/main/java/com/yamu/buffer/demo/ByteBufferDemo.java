@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -51,7 +52,7 @@ public class ByteBufferDemo {
     public static Boolean ALWAYS = false ;
     public static Boolean WRITE = false ;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         if (args != null && args.length > 0) {
             CACHE_CNT = Integer.parseInt(args[0]);
             CACHE_SIZE = Integer.parseInt(args[1]);
@@ -59,8 +60,8 @@ public class ByteBufferDemo {
             CONSUMER_CNT = Integer.parseInt(args[3]);
             FILE_PATH = args[4];
             OUTPUT_FILE = args[5];
-            ALWAYS = Boolean.getBoolean(args[6]);
-            WRITE = Boolean.getBoolean(args[7]);
+            ALWAYS = Objects.equals("false",args[6]) ? ALWAYS : !ALWAYS;
+            WRITE = Objects.equals("false",args[7]) ? WRITE : !WRITE;
         } else {
             System.out.println("无参数输入，正在使用默认参数");
         }
