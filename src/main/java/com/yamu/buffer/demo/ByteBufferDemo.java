@@ -73,7 +73,7 @@ public class ByteBufferDemo {
         System.out.println("     原始文件路径："+FILE_PATH);
         System.out.println("     写出文件路径："+OUTPUT_FILE);
         System.out.println("     是否一直往堆外内存写数据："+ALWAYS);
-        System.out.println("     是否输出到文件中："+WRITE);
+        System.out.println("     是否输出到文件中："+!WRITE);
         System.out.println();
 
 
